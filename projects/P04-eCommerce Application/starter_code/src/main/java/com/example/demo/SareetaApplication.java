@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import org.apache.log4j.BasicConfigurator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -18,6 +19,7 @@ public class SareetaApplication {
 		return new BCryptPasswordEncoder();
 	}
 	public static void main(String[] args) {
+		BasicConfigurator.configure();
 		SpringApplication.run(SareetaApplication.class, args);
 	}
 }

@@ -1,8 +1,11 @@
 package com.example.demo.security;
 
 import com.auth0.jwt.JWT;
+import com.example.demo.controllers.CartController;
 import com.example.demo.model.persistence.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -20,6 +23,8 @@ import java.util.ArrayList;
 import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
 public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(CartController.class);
     private AuthenticationManager authenticationManager;
 
     public JWTAuthenticationFilter(AuthenticationManager authenticationManager){
@@ -43,11 +48,13 @@ public class JWTAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest req, HttpServletResponse res,
                                             FilterChain chain,
                                             Authentication auth) throws IOException, ServletException {
+
         String token = JWT.create()
                 .withSubject(((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername())
                 .withExpiresAt(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
                 .sign(HMAC512(SecurityConstants.SECRET.getBytes()));
         res.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + token);
+        log.info("Login - Successful Authentication userName = " + ((org.springframework.security.core.userdetails.User) auth.getPrincipal()).getUsername());
 
     }
 }
