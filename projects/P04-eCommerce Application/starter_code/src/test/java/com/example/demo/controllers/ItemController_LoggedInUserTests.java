@@ -1,6 +1,7 @@
 package com.example.demo.controllers;
 
 import com.example.demo.SareetaApplication;
+import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.Item;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
@@ -42,10 +43,12 @@ public class ItemController_LoggedInUserTests {
 
     private MockMvc mockMvc;
 
-    private String USER = "testuser";
-    private String PASSWORD = "password123";
-    private static boolean CREATE = true;
-    private static String TOKEN;
+    private TestUtils utils = new TestUtils();
+
+//    private String USER = "testuser";
+//    private String PASSWORD = "password123";
+//    private static boolean CREATE = true;
+//    private static String TOKEN;
 
     @Before
     public void setup() {
@@ -56,35 +59,40 @@ public class ItemController_LoggedInUserTests {
     @Test
     public void createUser_Login_getAccessToken() throws Exception {
 
-        ResultActions createUserResult =
-                mockMvc.perform(post("/api/user/create")
-                        .contentType("application/json")
-                        .content(getUserContent(false))
-                        .accept("application/json"))
-                        .andExpect(status().isOk());
+        //Only run this if user does not exist
+        String token = TestUtils.getTOKEN();
+        if(token == null){
+            ResultActions createUserResult =
+                    mockMvc.perform(post("/api/user/create")
+                            .contentType("application/json")
+                            .content(TestUtils.getUserContent(false))
+                            .accept("application/json"))
+                            .andExpect(status().isOk());
 
-        ResultActions result
-                = mockMvc.perform(post("/login")
-                .contentType("application/json")
-                .content(getUserContent(true))
-                .accept("application/json"))
-                .andExpect(status().isOk());
+            ResultActions result
+                    = mockMvc.perform(post("/login")
+                    .contentType("application/json")
+                    .content(TestUtils.getUserContent(true))
+                    .accept("application/json"))
+                    .andExpect(status().isOk());
 
-        TOKEN = result.andReturn().getResponse().getHeader("Authorization");
-        CREATE = false;
+
+            TestUtils.setTOKEN(result.andReturn().getResponse().getHeader("Authorization"));
+        }
     }
 
     @Test
     public void getItemsTest() throws Exception{
 
-        if(CREATE){
+        String token = TestUtils.getTOKEN();
+        if(token == null){
             createUser_Login_getAccessToken();
         }
 
         ResultActions result =
                 mockMvc.perform(get("/api/item")
                         .contentType("application/json")
-                        .header("Authorization", TOKEN)
+                        .header("Authorization", TestUtils.getTOKEN())
                         .accept("application/json"))
                         .andExpect(status().isOk());
 
@@ -110,14 +118,15 @@ public class ItemController_LoggedInUserTests {
     @Test
     public void getItemsByIdTest() throws Exception {
         //1st create, login and get a token
-        if(CREATE){
+        String token = TestUtils.getTOKEN();
+        if(token == null){
             createUser_Login_getAccessToken();
         }
 
         ResultActions result =
                 mockMvc.perform(get("/api/item/2")
                         .contentType("application/json")
-                        .header("Authorization", TOKEN)
+                        .header("Authorization", TestUtils.getTOKEN())
                         .accept("application/json"))
                         .andExpect(status().isOk());
 
@@ -141,14 +150,15 @@ public class ItemController_LoggedInUserTests {
     @Test
     public void getItemsByNameTest() throws Exception {
         //1st create, login and get a token
-        if(CREATE){
+        String token = TestUtils.getTOKEN();
+        if(token == null){
             createUser_Login_getAccessToken();
         }
 
         ResultActions result =
                 mockMvc.perform(get("/api/item/name/Round Widget")
                         .contentType("application/json")
-                        .header("Authorization", TOKEN)
+                        .header("Authorization", TestUtils.getTOKEN())
                         .accept("application/json"))
                         .andExpect(status().isOk());
 
@@ -171,19 +181,19 @@ public class ItemController_LoggedInUserTests {
         assertEquals(price1, actualItem.getPrice());
     }
 
-    private String getUserContent(boolean login){
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        sb.append("\"username\" :  \"" + USER + "\",");
-        sb.append("\"password\" :  \"" + PASSWORD + "\"");
-
-        if(login){
-            sb.append("}");
-            return sb.toString();
-        }
-
-        sb.append(", \"confirmPassword\" :  \"" + PASSWORD + "\"");
-        sb.append("}");
-        return sb.toString();
-    }
+//    private String getUserContent(boolean login){
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("{");
+//        sb.append("\"username\" :  \"" + USER + "\",");
+//        sb.append("\"password\" :  \"" + PASSWORD + "\"");
+//
+//        if(login){
+//            sb.append("}");
+//            return sb.toString();
+//        }
+//
+//        sb.append(", \"confirmPassword\" :  \"" + PASSWORD + "\"");
+//        sb.append("}");
+//        return sb.toString();
+//    }
 }

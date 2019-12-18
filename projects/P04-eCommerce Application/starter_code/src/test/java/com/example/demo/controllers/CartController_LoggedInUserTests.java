@@ -1,6 +1,7 @@
 package com.example.demo.controllers;
 
 import com.example.demo.SareetaApplication;
+import com.example.demo.TestUtils;
 import com.example.demo.model.persistence.Cart;
 import com.example.demo.model.persistence.Item;
 import com.example.demo.model.persistence.User;
@@ -44,11 +45,6 @@ public class CartController_LoggedInUserTests {
 
     private MockMvc mockMvc;
 
-    private String USER = "testuser";
-    private String PASSWORD = "password123";
-    private static boolean CREATE = true;
-    private static String TOKEN;
-
     @Before
     public void setup() {
         this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac)
@@ -58,28 +54,33 @@ public class CartController_LoggedInUserTests {
     @Test
     public void createUser_Login_getAccessToken() throws Exception {
 
-        ResultActions createUserResult =
-                mockMvc.perform(post("/api/user/create")
-                        .contentType("application/json")
-                        .content(getUserContent(false))
-                        .accept("application/json"))
-                        .andExpect(status().isOk());
+        //Only run this if user does not exist
+        String token = TestUtils.getTOKEN();
+        if(token == null){
+            ResultActions createUserResult =
+                    mockMvc.perform(post("/api/user/create")
+                            .contentType("application/json")
+                            .content(TestUtils.getUserContent(false))
+                            .accept("application/json"))
+                            .andExpect(status().isOk());
 
-        ResultActions result
-                = mockMvc.perform(post("/login")
-                .contentType("application/json")
-                .content(getUserContent(true))
-                .accept("application/json"))
-                .andExpect(status().isOk());
+            ResultActions result
+                    = mockMvc.perform(post("/login")
+                    .contentType("application/json")
+                    .content(TestUtils.getUserContent(true))
+                    .accept("application/json"))
+                    .andExpect(status().isOk());
 
-        TOKEN = result.andReturn().getResponse().getHeader("Authorization");
-        CREATE = false;
+
+            TestUtils.setTOKEN(result.andReturn().getResponse().getHeader("Authorization"));
+        }
     }
 
     @Test
     public void d_addTocartTest() throws Exception{
 
-        if(CREATE){
+        String token = TestUtils.getTOKEN();
+        if(token == null){
             createUser_Login_getAccessToken();
         }
 
@@ -87,7 +88,7 @@ public class CartController_LoggedInUserTests {
                 mockMvc.perform(post("/api/cart/addToCart")
                         .contentType("application/json")
                         .content(getCartContent())
-                        .header("Authorization", TOKEN)
+                        .header("Authorization", TestUtils.getTOKEN())
                         .accept("application/json"))
                         .andExpect(status().isOk());
 
@@ -101,7 +102,7 @@ public class CartController_LoggedInUserTests {
 
         User theUser = cart.getUser();
         assertNotNull(theUser);
-        assertEquals(USER, theUser.getUsername());
+        assertEquals(TestUtils.getUSER(), theUser.getUsername());
         assertEquals((long)1, theUser.getId());
 
         List<Item> items = cart.getItems();
@@ -123,7 +124,8 @@ public class CartController_LoggedInUserTests {
     @Test
     public void removeFromCartTest() throws Exception{
 
-        if(CREATE){
+        String token = TestUtils.getTOKEN();
+        if(token == null){
             createUser_Login_getAccessToken();
             d_addTocartTest();
         }
@@ -132,7 +134,7 @@ public class CartController_LoggedInUserTests {
                 mockMvc.perform(post("/api/cart/removeFromCart")
                         .contentType("application/json")
                         .content(getRemoveFromCartContent())
-                        .header("Authorization", TOKEN)
+                        .header("Authorization", TestUtils.getTOKEN())
                         .accept("application/json"))
                         .andExpect(status().isOk());
 
@@ -146,7 +148,7 @@ public class CartController_LoggedInUserTests {
 
         User theUser = cart.getUser();
         assertNotNull(theUser);
-        assertEquals(USER, theUser.getUsername());
+        assertEquals(TestUtils.getUSER(), theUser.getUsername());
         assertEquals((long)1, theUser.getId());
 
         List<Item> items = cart.getItems();
@@ -164,26 +166,10 @@ public class CartController_LoggedInUserTests {
         assertEquals(price1, item.getPrice());
     }
 
-    private String getUserContent(boolean login){
-        StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        sb.append("\"username\" :  \"" + USER + "\",");
-        sb.append("\"password\" :  \"" + PASSWORD + "\"");
-
-        if(login){
-            sb.append("}");
-            return sb.toString();
-        }
-
-        sb.append(", \"confirmPassword\" :  \"" + PASSWORD + "\"");
-        sb.append("}");
-        return sb.toString();
-    }
-
     private String getCartContent(){
         StringBuilder sb = new StringBuilder();
         sb.append("{");
-        sb.append("\"username\" :  \"" + USER + "\",");
+        sb.append("\"username\" :  \"" + TestUtils.getUSER() + "\",");
         sb.append("\"itemId\" :  \"" + 1 + "\",");
         sb.append("\"quantity\" :  \"" + 2 + "\"");
         sb.append("}");
@@ -193,7 +179,7 @@ public class CartController_LoggedInUserTests {
     private String getRemoveFromCartContent(){
         StringBuilder sb = new StringBuilder();
         sb.append("{");
-        sb.append("\"username\" :  \"" + USER + "\",");
+        sb.append("\"username\" :  \"" + TestUtils.getUSER() + "\",");
         sb.append("\"itemId\" :  \"" + 1 + "\",");
         sb.append("\"quantity\" :  \"" + 1 + "\"");
         sb.append("}");
